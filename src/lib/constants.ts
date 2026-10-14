@@ -1,0 +1,2 @@
+export const IMAGE_UPLOAD_MAX_SIZE =
+  Number(process.env.NEXT_PUBLIC_IMAGE_UPLOAD_MAX_SIZE) || 921600;

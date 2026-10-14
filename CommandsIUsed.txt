@@ -1,0 +1,60 @@
+npx create-next-app@latest
+
+npm i date-fns
+
+---
+
+npm i react-markdown
+
+npm i rehype-sanitize
+
+npm i remark-gfm
+
+---
+
+npm install -D @tailwindcss/typography
+
+---
+
+
+npm i drizzle-orm better-sqlite3
+
+npm i -D @types/better-sqlite3 drizzle-kit
+
+npm install --save-dev tsx
+
+---
+
+npm i lucide-react
+
+npm i react-toastify
+
+---
+
+npm i @uiw/react-md-editor
+
+---
+
+npm i zod
+
+npm install sanitize-html
+npm install -D @types/sanitize-html
+
+---
+
+npm i uuid slugify
+
+
+---
+
+npm i sharp
+
+---
+
+npm i bcryptjs
+
+
+---
+
+
+npm i jose
