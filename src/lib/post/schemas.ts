@@ -2,6 +2,7 @@
 import { isUrlOrRelativePath } from '@/src/utils/is-url-or-relative-path';
 import sanitizeHtml from 'sanitize-html';
 import { z } from 'zod';
+import { PublicUserSchema } from '../user/schemas';
 
 const PostBaseSchema = z.object({
   title: z
@@ -48,3 +49,29 @@ export const PostCreateSchema = PostBaseSchema;
 export const PostUpdateSchema = PostBaseSchema.extend({
   // id: z.string().uuid('ID inválido'),
 });
+
+export const CreatePostForApiSchema = PostBaseSchema.omit({
+  author: true,
+  published: true,
+});
+
+export const UpdatePostForApiSchema = PostBaseSchema.omit({
+  author: true,
+});
+
+export const PublicPostForApiSchema = z.object({
+  id: z.string().default(''),
+  slug: z.string().default(''),
+  title: z.string().default(''),
+  excerpt: z.string().default(''),
+  author: PublicUserSchema.default({ id: '', email: '', name: '' }),
+  content: z.string().default(''),
+  coverImageUrl: z.string().default(''),
+  published: z.boolean().default(false),
+  createdAt: z.string().default(''),
+  updatedAt: z.string().default(''),
+});
+
+export type CreatePostForApiDto = z.infer<typeof CreatePostForApiSchema>;
+export type UpdatePostForApiDto = z.infer<typeof UpdatePostForApiSchema>;
+export type PublicPostForApiDto = z.infer<typeof PublicPostForApiSchema>;

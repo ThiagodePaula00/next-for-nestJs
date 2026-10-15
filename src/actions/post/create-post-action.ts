@@ -2,7 +2,7 @@
 
 import { makeParticialPublicPost, type PublicPost } from '@/src/dto/post/dto';
 import { verifyLoginSession } from '@/src/lib/login/manage-login';
-import { PostCreateSchema } from '@/src/lib/post/validation';
+import { PostCreateSchema } from '@/src/lib/post/schemas';
 import type { PostModel } from '@/src/models/post/post-model';
 import { postRepository } from '@/src/repository/post';
 import { makeSlugFromText } from '@/src/utils/make-slug-from-texts';

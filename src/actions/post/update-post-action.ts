@@ -1,6 +1,6 @@
 'use server';
 
-import { PostUpdateSchema } from '@/src/lib/post/validation';
+import { PostUpdateSchema } from '@/src/lib/post/schemas';
 import {
   makeParticialPublicPost,
   makePublicPostFromDb,

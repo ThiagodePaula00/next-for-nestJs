@@ -1,10 +1,30 @@
-import { postRepository } from "@/src/repository/post";
-import { cache } from "react";
+import type { PostModelFromApi } from '@/src/models/post/post-model';
+import { postRepository } from '@/src/repository/post';
+import { authenticatedApiRequest } from '@/src/utils/authenticated-api-request';
+import { cache } from 'react';
 
-export const findPostByIdAdmin = cache(async (id: string) => 
-    {return postRepository.findById(id)
+export const findPostByIdAdmin = cache(async (id: string) => {
+  return postRepository.findById(id);
 });
 
-export const findAllPostAdmin = cache(async () => 
-    {return postRepository.findAll();
+export const findPostByIdFromApiAdmin = cache(async (id: string) => {
+  return authenticatedApiRequest<PostModelFromApi>(`/post/me/${id}`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+});
+
+export const findAllPostAdmin = cache(async () => {
+  return postRepository.findAll();
+});
+
+export const findAllPostFromApiAdmin = cache(async () => {
+  return authenticatedApiRequest<PostModelFromApi[]>('/post/me/', {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
 });
