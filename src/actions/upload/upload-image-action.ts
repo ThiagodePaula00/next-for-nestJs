@@ -3,14 +3,11 @@
 import {
   IMAGE_UPLOAD_MAX_SIZE,
 } from '@/src/lib/constants';
-import { verifyLoginSession } from '@/src/lib/login/manage-login';
-import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
-import { resolve } from 'path';
+import { getLoginSessionForApi } from '@/src/lib/login/manage-login';
+import { authenticatedApiRequest } from '@/src/utils/authenticated-api-request';
 import sharp from 'sharp';
 
 const MAX_IMAGE_PIXELS = 20_000_000;
-const MAX_PROCESSED_IMAGE_SIZE = 4 * 1024 * 1024;
 const SUPPORTED_INPUT_FORMATS = new Set(['jpeg', 'png', 'webp']);
 
 type UploadImageActionResult = {
@@ -25,7 +22,7 @@ export async function uploadImageAction(
     { url = '', error = '' }: Partial<UploadImageActionResult> = {},
   ): UploadImageActionResult => ({ url, error });
 
-  const isAuthenticated = await verifyLoginSession();
+  const isAuthenticated = await getLoginSessionForApi();
 
   if (!isAuthenticated) {
     return makeResult({ error: 'Faça login novamente antes de enviar a imagem' });
@@ -66,39 +63,39 @@ export async function uploadImageAction(
     return makeResult({ error: 'Imagem inválida ou corrompida' });
   }
 
-  const fileName = `${randomUUID()}.webp`;
-  const uploadDirectoryName = process.env.IMAGE_UPLOAD_DIRECTORY || 'uploads';
-  if (!/^[a-zA-Z0-9_-]+$/.test(uploadDirectoryName)) {
-    return makeResult({ error: 'Diretório de upload inválido' });
-  }
+  const uploadFormData = new FormData();
+  uploadFormData.append('file', file, file.name);
 
-  const uploadDirectory = resolve(
-    process.cwd(),
-    'public',
-    uploadDirectoryName,
+  const uploadResponse = await authenticatedApiRequest<{ url: string }>(
+    '/upload',
+    {
+      method: 'POST',
+      body: uploadFormData,
+    },
   );
 
-  try {
-    const processedImage = await sharp(inputBuffer, {
-      failOn: 'error',
-      limitInputPixels: MAX_IMAGE_PIXELS,
-    })
-      .rotate()
-      .webp({ quality: 82 })
-      .toBuffer();
-
-    if (processedImage.length > MAX_PROCESSED_IMAGE_SIZE) {
-      return makeResult({ error: 'Imagem processada muito grande' });
-    }
-
-    await mkdir(uploadDirectory, { recursive: true });
-    await writeFile(resolve(uploadDirectory, fileName), processedImage, {
-      flag: 'wx',
-    });
-  } catch (error) {
-    console.error('Falha ao processar ou salvar imagem enviada', error);
-    return makeResult({ error: 'Falha ao processar a imagem' });
+  if (!uploadResponse.success) {
+    return makeResult({ error: uploadResponse.errors[0] });
   }
 
-  return makeResult({ url: `/${uploadDirectoryName}/${fileName}` });
+  if (
+    typeof uploadResponse.data?.url !== 'string' ||
+    uploadResponse.data.url.length === 0
+  ) {
+    return makeResult({ error: 'Resposta inválida do servidor de imagens' });
+  }
+
+  let url: string;
+  try {
+    const imageServerUrl =
+      process.env.IMAGE_SERVER_URL ||
+      process.env.API_URL ||
+      'http://localhost:3001';
+    url = new URL(uploadResponse.data.url, imageServerUrl).toString();
+  } catch (error) {
+    console.error('URL inválida retornada pelo servidor de imagens', error);
+    return makeResult({ error: 'URL inválida retornada pelo servidor de imagens' });
+  }
+
+  return makeResult({ url });
 }
