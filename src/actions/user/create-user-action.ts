@@ -6,8 +6,8 @@ import {
   PublicUserSchema,
 } from '@/src/lib/user/schemas';
 import { apiRequest } from '@/src/utils/api-request';
-import { asyncDelay } from '@/src/utils/async-delay';
 import { getZodErrorMessages } from '@/src/utils/get-zod-error-message';
+import { verifyHoneypotInput } from '@/src/utils/verify-honeypot-input';
 import { redirect } from 'next/navigation';
 
 type CreateUserActionState = {
@@ -20,12 +20,20 @@ export async function createUserAction(
   state: CreateUserActionState,
   formData: FormData,
 ): Promise<CreateUserActionState> {
-  await asyncDelay(3000);
-
   if (!(formData instanceof FormData)) {
     return {
       user: state.user,
       errors: ['Dados inválidos'],
+      success: false,
+    };
+  }
+
+  const isBot = await verifyHoneypotInput(formData, 5000);
+
+  if (isBot) {
+    return {
+      user: state.user,
+      errors: ['nice'],
       success: false,
     };
   }
