@@ -1,11 +1,12 @@
 'use server'
 
-import { verifyLoginSession } from "@/src/lib/login/manage-login";
-import { postRepository } from "@/src/repository/post";
+import { getLoginSessionForApi } from '@/src/lib/login/manage-login';
+import type { PublicPostForApiDto } from '@/src/lib/post/schemas';
+import { authenticatedApiRequest } from '@/src/utils/authenticated-api-request';
 import { revalidatePath, updateTag } from "next/cache";
 
 export async function deletePostAction(id: string) {
-    const isAuthenticated = await verifyLoginSession();
+    const isAuthenticated = await getLoginSessionForApi();
 
     if (!isAuthenticated) {
         return {
@@ -13,35 +14,45 @@ export async function deletePostAction(id: string) {
         };
     }
 
-    if(!id || typeof id !== 'string') {
+    if (!id || typeof id !== 'string') {
         return {
             error: 'Dados inválidos',
         };
     }
 
-    let post;
-    try {
-        post = await postRepository.delete(id);
-    } catch (e: unknown) {
-        if (e instanceof Error) {
-        return {
-            error: e.message,
-        };
-        }
+    const postResponse = await authenticatedApiRequest<PublicPostForApiDto>(
+      `/post/me/${id}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
 
-        return {
-        error: 'Erro desconhecido',
-        };
+    if (!postResponse.success) {
+      return {
+        error: postResponse.errors.join(', '),
+      };
     }
 
-    if (!post) {
+    const deletePostResponse = await authenticatedApiRequest<PublicPostForApiDto>(
+      `/post/me/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (!deletePostResponse.success) {
         return {
-            error: 'Post não encontrado',
+            error: deletePostResponse.errors.join(', '),
         };
     }
 
     updateTag('posts');
-    updateTag(`post-${post.slug}`);
+    updateTag(`post-${postResponse.data.slug}`);
     revalidatePath('/admin/post');
 
     return {

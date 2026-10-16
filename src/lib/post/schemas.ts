@@ -64,10 +64,20 @@ export const PublicPostForApiSchema = z.object({
   slug: z.string().default(''),
   title: z.string().default(''),
   excerpt: z.string().default(''),
-  author: PublicUserSchema.default({ id: '', email: '', name: '' }),
+  author: z.preprocess(
+    value => (typeof value === 'string' ? undefined : value),
+    PublicUserSchema.default({ id: '', email: '', name: '' }),
+  ),
   content: z.string().default(''),
   coverImageUrl: z.string().default(''),
-  published: z.boolean().default(false),
+  published: z.preprocess(
+    value => {
+      if (value === 'on' || value === 'true') return true;
+      if (value === 'false') return false;
+      return value;
+    },
+    z.boolean().default(false),
+  ),
   createdAt: z.string().default(''),
   updatedAt: z.string().default(''),
 });

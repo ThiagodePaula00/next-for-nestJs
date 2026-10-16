@@ -1,6 +1,5 @@
 'use client';
 
-import { makeParticialPublicPost, type PublicPost } from '@/src/dto/post/dto';
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from '../../Button';
@@ -11,6 +10,10 @@ import { MarkdownEditor } from '../../MarkdownEditor';
 import { createPostAction } from '@/src/actions/post/create-post-action';
 import { updatePostAction } from '@/src/actions/post/update-post-action';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  PublicPostForApiSchema,
+  type PublicPostForApiDto,
+} from '@/src/lib/post/schemas';
 
 type ManagePostFormProps =
   | {
@@ -18,7 +21,7 @@ type ManagePostFormProps =
     }
   | {
       mode: 'update';
-      publicPost: PublicPost;
+      publicPost: PublicPostForApiDto;
     };
 
 const actions = {
@@ -33,7 +36,7 @@ export function ManagePostForm(props: ManagePostFormProps) {
   const created = searchParams.get('created');
   const publicPost = props.mode === 'update' ? props.publicPost : undefined;
   const initialState = {
-    formState: makeParticialPublicPost(publicPost),
+    formState: PublicPostForApiSchema.parse(publicPost ?? {}),
     errors: [],
   };
 
@@ -84,15 +87,6 @@ export function ManagePostForm(props: ManagePostFormProps) {
         />
 
         <InputText
-          labelText='Autor'
-          name='author'
-          placeholder='Digite o nome do autor'
-          type='text'
-          defaultValue={formState.author}
-          disabled={isPending}
-        />
-
-        <InputText
           labelText='Título'
           name='title'
           placeholder='Digite o título'
@@ -129,13 +123,15 @@ export function ManagePostForm(props: ManagePostFormProps) {
           disabled={isPending}
         />
 
-        <InputCheckbox
-          labelText='Publicar?'
-          name='published'
-          type='checkbox'
-          defaultChecked={formState.published}
-          disabled={isPending}
-        />
+        {props.mode === 'update' && (
+          <InputCheckbox
+            labelText='Publicar?'
+            name='published'
+            type='checkbox'
+            defaultChecked={formState.published}
+            disabled={isPending}
+          />
+        )}
 
         <div className='mt-4'>
           {state.errors.length > 0 && (
